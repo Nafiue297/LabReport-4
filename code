@@ -1,0 +1,76 @@
+import random
+
+def manhattan(p1, p2):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+def generate_points(num_points=100, grid_size=20):
+    return [(random.randint(0, grid_size - 1),
+            random.randint(0, grid_size - 1)) 
+            for _ in range(num_points)]
+
+def generate_clusters(k=10, grid_size=20):
+    return [(random.randint(0, grid_size - 1),
+             random.randint(0, grid_size - 1)) 
+             for _ in range(k)]
+
+def k_means(points, initial_clusters, k=10, max_iter=100):
+    clusters = initial_clusters[:]
+    for _ in range(max_iter):
+        assignments = []
+        
+        for px, py in points:
+            distances = [manhattan((px, py), center) 
+                        for center in clusters]
+            assigned_cluster = distances.index(min(distances))
+            assignments.append(assigned_cluster)
+        
+        new_clusters = [(0, 0)] * k
+        counts = [0] * k
+        
+        for idx, (px, py) in enumerate(points):
+            c = assignments[idx]
+            cx, cy = new_clusters[c]
+            new_clusters[c] = (cx + px, cy + py)
+            counts[c] += 1
+        
+        for i in range(k):
+            if counts[i] != 0:
+                new_clusters[i] = (new_clusters[i][0] // counts[i],
+                                  new_clusters[i][1] // counts[i])
+            else:
+                new_clusters[i] = clusters[i]
+        
+        if new_clusters == clusters:
+            break
+        clusters = new_clusters
+    
+    return assignments, clusters
+
+def visualize(points, assignments, clusters, grid_size=20):
+    matrix = [["." for _ in range(grid_size)] 
+              for _ in range(grid_size)]
+    
+    for i, (cx, cy) in enumerate(clusters):
+        if 0 <= cx < grid_size and 0 <= cy < grid_size:
+            matrix[cy][cx] = "C"
+    
+    for idx, (px, py) in enumerate(points):
+        cl = assignments[idx]
+        if 0 <= px < grid_size and 0 <= py < grid_size:
+            if matrix[py][px] == ".":
+                matrix[py][px] = str(cl)
+            elif matrix[py][px] == "C":
+                matrix[py][px] = "C"
+            else:
+                matrix[py][px] = "*"
+    
+    for row in matrix:
+        print(" ".join(row))
+
+# Main execution
+points = generate_points()
+clusters = generate_clusters()
+assignments, final_clusters = k_means(points, clusters)
+
+print("\nCluster Visualization (2D Grid):\n")
+visualize(points, assignments, final_clusters)
